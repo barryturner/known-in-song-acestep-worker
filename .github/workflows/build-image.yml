@@ -52,5 +52,6 @@ jobs:
           platforms: linux/amd64
           push: true
           provenance: false
+          cache-from: type=registry,ref=ghcr.io/barryturner/known-in-song-acestep-worker:v0.1.0
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

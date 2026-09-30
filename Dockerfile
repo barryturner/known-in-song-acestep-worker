@@ -39,18 +39,40 @@ RUN set -eux; \
 
 COPY model-sha256s.txt /tmp/model-sha256s.txt
 
-# Download only the assets used by the accepted XL SFT workflow. The source
-# revision and each large-file SHA-256 are fixed, then build-only metadata is
-# removed so the runtime layer contains just the four files.
+# Download only the assets used by the accepted XL SFT workflow. Keep every
+# asset in its own OCI layer: Runpod can fetch and extract independent layers
+# concurrently on a fresh worker instead of serially unpacking one ~20 GB
+# model layer. The source revision and every large-file SHA-256 are fixed.
 RUN set -eux; \
     hf download "${MODEL_REPO}" --revision "${MODEL_REVISION}" \
       --include split_files/diffusion_models/acestep_v1.5_xl_sft_bf16.safetensors \
+      --local-dir "${MODEL_DIR}"; \
+    cd "${MODEL_DIR}"; \
+    grep 'split_files/diffusion_models/acestep_v1.5_xl_sft_bf16.safetensors$' /tmp/model-sha256s.txt | sha256sum -c -; \
+    rm -rf .cache
+
+RUN set -eux; \
+    hf download "${MODEL_REPO}" --revision "${MODEL_REVISION}" \
       --include split_files/text_encoders/qwen_0.6b_ace15.safetensors \
+      --local-dir "${MODEL_DIR}"; \
+    cd "${MODEL_DIR}"; \
+    grep 'split_files/text_encoders/qwen_0.6b_ace15.safetensors$' /tmp/model-sha256s.txt | sha256sum -c -; \
+    rm -rf .cache
+
+RUN set -eux; \
+    hf download "${MODEL_REPO}" --revision "${MODEL_REVISION}" \
       --include split_files/text_encoders/qwen_4b_ace15.safetensors \
+      --local-dir "${MODEL_DIR}"; \
+    cd "${MODEL_DIR}"; \
+    grep 'split_files/text_encoders/qwen_4b_ace15.safetensors$' /tmp/model-sha256s.txt | sha256sum -c -; \
+    rm -rf .cache
+
+RUN set -eux; \
+    hf download "${MODEL_REPO}" --revision "${MODEL_REVISION}" \
       --include split_files/vae/ace_1.5_vae.safetensors \
       --local-dir "${MODEL_DIR}"; \
     cd "${MODEL_DIR}"; \
-    sha256sum -c /tmp/model-sha256s.txt; \
+    grep 'split_files/vae/ace_1.5_vae.safetensors$' /tmp/model-sha256s.txt | sha256sum -c -; \
     rm -rf .cache /tmp/model-sha256s.txt
 
 COPY start.sh /opt/runpod/start.sh
