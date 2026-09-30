@@ -5,6 +5,12 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - handler.py
+      - start.sh
+      - model-sha256s.txt
 
 permissions:
   contents: read
